@@ -1,4 +1,4 @@
-# StintLab
+<img width="257" height="257" alt="stintlab-mark" src="https://github.com/user-attachments/assets/b2d650be-a494-4ac2-808c-1b90fbbbde19" /> # StintLab
 
 **Motorsport telemetry, strategy and race engineering — built for sim racing.**
 
@@ -197,7 +197,11 @@ The project is being built with future multi-platform support in mind, while kee
 
 ## Screenshots
 
-*Screenshots will be added as the interface develops.*
+<img width="1392" height="892" alt="Captura de ecrã 2026-10-04, às 14 03 35" src="https://github.com/user-attachments/assets/5ad19cd2-0aa1-4db0-9d59-53ef35c1af7d" />
+
+<img width="1392" height="892" alt="Captura de ecrã 2026-10-04, às 14 03 52" src="https://github.com/user-attachments/assets/5e105d09-dbf0-417e-b51a-121339bda116" />
+
+
 
 
 
