@@ -203,7 +203,8 @@ The project is being built with future multi-platform support in mind, while kee
 
 ## Screenshots
 
-<img width="1392" height="892" alt="Captura de ecrã 2026-10-04, às 14 03 35" src="https://github.com/user-attachments/assets/5ad19cd2-0aa1-4db0-9d59-53ef35c1af7d" />
+<img width="1392" height="892" alt="Captura de ecrã 2026-10-04, às 14 07 05" src="https://github.com/user-attachments/assets/668c6cc1-5114-4a9d-974b-0e76dd53e31b" />
+
 
 <img width="1392" height="892" alt="Captura de ecrã 2026-10-04, às 14 03 52" src="https://github.com/user-attachments/assets/5e105d09-dbf0-417e-b51a-121339bda116" />
 
