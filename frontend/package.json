@@ -1,0 +1,41 @@
+{
+  "name": "Stintlab",
+  "version": "0.1.0",
+  "description": "Real-time race engineering for Sim Racing",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "icon:icns": "sh scripts/make-icns.sh"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^26.15.6"
+  },
+  "author": "Gonçalo Silva",
+  "license": "MIT",
+  "build": {
+    "appId": "com.stintlab.app",
+    "productName": "StintLab",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "assets/**/*"
+    ],
+    "mac": {
+      "icon": "icons/StintLab.icon",
+      "category": "public.app-category.utilities"
+    },
+    "dmg": {
+      "icon": "build/StintLab.icns"
+    }
+  }
+}

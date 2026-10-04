@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StintLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06070A;--raise:#0C0D13;--line:rgba(255,255,255,.08);
+  --text:#EDEEF5;--muted:#7C7F94;
+  --blue:#4A7DFF;--green:#34D399;--purple:#8B5CF6;--red:#FF5470;--amber:#FBBF24;
+  --sans:"Inter",system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+#ambient{position:fixed;inset:0;pointer-events:none;background:
+  radial-gradient(55% 45% at 10% 6%,rgba(110,50,200,.2),transparent 70%),
+  radial-gradient(45% 40% at 92% 25%,rgba(50,100,230,.1),transparent 70%),
+  radial-gradient(60% 40% at 55% 108%,rgba(20,130,120,.1),transparent 70%)}
+#dragbar{position:fixed;top:0;left:0;right:0;height:34px;-webkit-app-region:drag;z-index:0}
+#app{position:relative;display:flex;flex-direction:column;height:100vh}
+.ic{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+
+/* Toolbar */
+#toolbar{-webkit-app-region:drag;display:flex;align-items:center;gap:10px;height:52px;margin:38px 14px 0;padding:0 18px 0 14px;flex-shrink:0;
+  border:1px solid var(--line);border-radius:999px;background:rgba(10,11,16,.72);backdrop-filter:blur(10px)}
+.tb-sep{width:1px;height:22px;background:var(--line)}
+.tb-grip{color:var(--muted)}
+.tb-brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;padding:0 4px}
+.brand-logo{width:22px;height:22px;object-fit:contain}
+#nav{display:flex;gap:6px}
+.tb-spacer{flex:1}
+.pill{-webkit-app-region:no-drag;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:34px;padding:0 14px;
+  border-radius:999px;border:1px solid var(--line);background:var(--raise);color:var(--text);font:600 13px var(--sans);cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.pill:hover{border-color:rgba(255,255,255,.2)}
+.nav-tab.active{background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.55);color:var(--green)}
+.nav-tab:disabled{opacity:.35;cursor:not-allowed;padding:0 11px}
+#led-strip{display:flex;gap:4px;align-items:center;padding:0 4px}
+.led{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.1);transition:background .3s,box-shadow .3s}
+.led.active-green{background:var(--green);box-shadow:0 0 6px var(--green)}
+.led.active-yellow{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.led.active-red{background:var(--red);box-shadow:0 0 6px var(--red)}
+.led.active-cyan{background:var(--blue);box-shadow:0 0 6px var(--blue)}
+
+/* Pages */
+#pages{flex:1;min-height:0;position:relative}
+.page{display:none;position:relative;height:100%;overflow-y:auto;padding:14px 16px 18px}
+#page-home.active{display:flex;flex-direction:column;align-items:center;gap:28px;padding-top:32px}
+#page-dashboard.active,#page-pitwall.active{display:flex;flex-direction:column;gap:12px}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+
+/* Panels: glowing outline like the reference nodes */
+.panel{--c:var(--line);--g:transparent;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+  border:1px solid var(--c);border-radius:18px;padding:12px 16px;box-shadow:0 0 22px var(--g)}
+.panel-blue{--c:rgba(74,125,255,.6);--g:rgba(74,125,255,.14)}
+.panel-purple{--c:rgba(139,92,246,.6);--g:rgba(139,92,246,.14)}
+.panel-red{--c:rgba(255,84,112,.6);--g:rgba(255,84,112,.12)}
+.panel-green{--c:rgba(52,211,153,.6);--g:rgba(52,211,153,.12)}
+.panel-yellow{--c:rgba(251,191,36,.55);--g:rgba(251,191,36,.1)}
+.panel-label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.panel-value{font:600 38px/1 var(--mono)}
+.panel-value-sm{font:600 28px/1 var(--mono)}
+
+/* Home */
+.home-header{text-align:center}
+.home-header h1{font-size:26px;font-weight:700}
+.home-header p{margin-top:6px;font-size:13px;color:var(--muted)}
+.game-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:36px}
+.game-node{width:190px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;cursor:pointer}
+.node-ring{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--blue);
+  background:radial-gradient(circle,rgba(74,125,255,.14),rgba(10,12,24,.9) 70%);box-shadow:0 0 20px rgba(74,125,255,.3);transition:box-shadow .2s}
+.node-ring .ic{width:30px;height:30px;color:#9DB6FF}
+.game-node.available:hover .node-ring,.game-node.selected .node-ring{box-shadow:0 0 32px rgba(74,125,255,.6)}
+.node-ring img{max-width:64px;max-height:28px;width:auto;height:auto}
+.game-node.soon .node-ring img{opacity:.4;filter:grayscale(1)}
+.node-label{padding:5px 14px;border-radius:999px;background:var(--raise);border:1px solid var(--line);font-weight:700;font-size:14px}
+.node-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.node-badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px}
+.badge-active{color:var(--green);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.45)}
+.badge-soon{color:var(--muted);border:1px solid var(--line)}
+.game-node.soon{opacity:.5;cursor:not-allowed}
+.game-node.soon .node-ring{border-color:rgba(255,255,255,.16);box-shadow:none;background:var(--raise)}
+.game-node.soon .node-ring .ic{color:var(--muted)}
+
+.setup-panel{width:100%;max-width:760px;padding:22px}
+.setup-panel h2{font-size:14px;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.setup-row{display:flex;gap:12px;flex-wrap:wrap}
+.setup-field{display:flex;flex-direction:column;gap:6px}
+.setup-field label{font-size:12px;font-weight:600;color:var(--muted)}
+.setup-field input{width:180px;background:#08090D;border:1px solid var(--line);border-radius:12px;color:var(--text);font:500 14px var(--mono);padding:9px 12px;outline:none;transition:border-color .15s,box-shadow .15s}
+.setup-field input.port-input{width:100px}
+.setup-field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(74,125,255,.18)}
+.btn-primary{margin-top:16px;height:38px;padding:0 24px;border:none;border-radius:999px;background:var(--blue);color:#fff;font:600 13px var(--sans);cursor:pointer;transition:box-shadow .15s,transform .1s}
+.btn-primary:hover{box-shadow:0 0 18px rgba(74,125,255,.55)}
+.btn-primary:active{transform:scale(.97)}
+.status-row{display:flex;align-items:center;gap:10px;margin-top:16px;padding:10px 14px;background:#08090D;border:1px solid var(--line);border-radius:12px}
+.status-dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.status-dot.connected{background:var(--green);box-shadow:0 0 8px var(--green)}
+.status-dot.connecting{background:var(--amber);animation:blink 1s infinite}
+.status-dot.error{background:var(--red);box-shadow:0 0 8px var(--red)}
+@keyframes blink{50%{opacity:.35}}
+.status-text{font:400 12px var(--mono);color:var(--muted)}
+.status-text span{color:var(--text)}
+
+/* Dashboard */
+.dash-top,.dash-mid,.dash-bottom{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:stretch}
+.dash-meta,.inputs-row{display:flex;gap:12px}
+#big-gear-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:130px;border-radius:24px;
+  border:1px solid var(--line);background:radial-gradient(60% 90% at 50% 50%,rgba(74,125,255,.1),rgba(6,7,10,.6))}
+#gear-display{font:600 104px/1 var(--mono)}
+#speed-display{font:500 15px var(--mono);color:var(--muted);margin-top:2px}
+.lap-times-panel{min-width:260px}
+.lap-time-row{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0}
+.lap-time-row+.lap-time-row{border-top:1px solid var(--line);margin-top:4px;padding-top:8px}
+.lap-time-value{font:500 26px var(--mono)}
+.lap-time-value.lt-last{font-size:20px;color:var(--muted)}
+.lap-time-value.lt-best{font-size:20px;color:var(--green)}
+.lap-time-sub{font-size:12px;font-weight:500;color:var(--muted)}
+.tyre-grid{display:grid;grid-template-columns:1fr 52px 52px 1fr;gap:8px;align-items:center;justify-items:center;margin-top:8px}
+.tyre-temp-label{font:500 22px var(--mono)}
+.tyre-viz{width:38px;height:62px;border-radius:10px;background:linear-gradient(180deg,#2B5BE0,#1B3E9E);border:1.5px solid var(--blue);box-shadow:0 0 14px rgba(74,125,255,.35)}
+.rpm-section{display:flex;flex-direction:column;gap:10px}
+.rpm-bar-container{display:flex;gap:3px;align-items:flex-end;height:48px}
+.rpm-seg{flex:1;min-height:6px;border-radius:3px;background:rgba(255,255,255,.07);transition:background .08s,height .08s}
+.rpm-seg.lit-green{background:var(--green)}
+.rpm-seg.lit-yellow{background:var(--amber)}
+.rpm-seg.lit-red{background:var(--red)}
+.rpm-value{font:600 32px var(--mono);text-align:center}
+.rpm-label{font-size:12px;font-weight:500;color:var(--muted);text-align:center}
+.side-stack{display:flex;flex-direction:column;gap:12px}
+.side-stack .panel{flex:1}
+.fuel-row{display:flex;gap:28px;align-items:center}
+.fuel-stat{text-align:center}
+.fuel-stat-value{font:600 32px var(--mono)}
+.fuel-stat-unit{font:500 12px var(--sans);color:var(--muted);margin-left:2px}
+.fuel-stat-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.time-value{font:500 26px var(--mono)}
+
+/* Pitwall */
+.pitwall-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pw-panel{display:flex;flex-direction:column;gap:10px;padding:14px 16px}
+.pw-panel-title{font-size:13px;font-weight:700;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.pw-position{display:flex;align-items:baseline;gap:10px}
+.pw-position-value{font:600 48px var(--mono)}
+.pw-position-delta{font:500 14px var(--mono)}
+.pw-position-delta.up{color:var(--green)}
+.pw-position-delta.down{color:var(--red)}
+.pw-note{font-size:11px;color:var(--muted);line-height:1.5}
+.pw-stat-row{display:flex;justify-content:space-between;align-items:baseline}
+.pw-stat-label{font-size:12px;font-weight:500;color:var(--muted)}
+.pw-stat-value{font:500 20px var(--mono)}
+.pw-stat-value.warn-amber{color:var(--amber)}
+.pw-stat-value.warn-red{color:var(--red)}
+.pw-tyre-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1}
+.pw-tyre-cell{background:#08090D;border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.pw-tyre-cell-label{font-size:12px;font-weight:600;color:var(--muted)}
+.pw-tyre-cell-temp{font:500 22px var(--mono);margin-top:4px}
+.pw-tyre-cell-slip{font:400 11px var(--mono);color:var(--muted);margin-top:2px}
+.pw-telem-row{display:flex;flex-direction:column;gap:4px}
+.pw-telem-label{display:flex;justify-content:space-between;font-size:12px;font-weight:500;color:var(--muted)}
+.pw-telem-label span:last-child{color:var(--text);font-family:var(--mono)}
+.pw-telem-track{height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+.pw-telem-fill{height:100%;width:0;border-radius:4px;transition:width .08s linear}
+.fill-throttle{background:var(--green)}
+.fill-brake{background:var(--red)}
+.fill-rpm{background:var(--blue)}
+.fill-speed{background:var(--purple)}
+#pw-live-events{grid-column:1/-1}
+.pw-events-list{display:flex;flex-direction:column-reverse;gap:6px;overflow-y:auto;max-height:140px}
+.pw-event-item{display:flex;align-items:baseline;gap:10px;font:400 12px var(--mono);padding:7px 12px;border-radius:12px;border-left:3px solid var(--muted);background:#08090D}
+.pw-event-item.sev-info{border-left-color:var(--blue)}
+.pw-event-item.sev-warning{border-left-color:var(--amber)}
+.pw-event-item.sev-critical{border-left-color:var(--red);color:var(--red)}
+.pw-event-lap{color:var(--muted);font-size:11px;flex-shrink:0}
+.pw-events-empty{font-size:12px;color:var(--muted)}
+
+/* Disconnected overlay */
+#disconnected-overlay{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(6,7,10,.84);backdrop-filter:blur(6px)}
+#disconnected-overlay.hidden{display:none}
+.overlay-text{font-size:14px;font-weight:600;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="ambient"></div>
+<div id="dragbar"></div>
+
+<!-- Icon sprite (replaces all emojis) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></symbol>
+  <symbol id="i-setup" viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/><circle cx="12" cy="12" r="2"/></symbol>
+</svg>
+
+<div id="app">
+
+  <!-- Floating toolbar -->
+  <header id="toolbar">
+    <svg class="ic tb-grip"><use href="#i-grip"/></svg>
+    <span class="tb-sep"></span>
+    <div class="tb-brand"><img class="brand-logo" src="assets/stintlab-mark.png" alt="" />StintLab</div>
+    <span class="tb-sep"></span>
+
+    <nav id="nav">
+      <button class="pill nav-tab active" data-page="home"><svg class="ic"><use href="#i-setup"/></svg>Setup</button>
+      <button class="pill nav-tab" data-page="dashboard"><svg class="ic"><use href="#i-gauge"/></svg>Dashboard</button>
+      <button class="pill nav-tab" data-page="pitwall"><svg class="ic"><use href="#i-monitor"/></svg>Pitwall</button>
+      <button class="pill nav-tab" disabled title="Laps (coming soon)" aria-label="Laps (coming soon)"><svg class="ic"><use href="#i-flag"/></svg></button>
+      <button class="pill nav-tab" disabled title="Replay (coming soon)" aria-label="Replay (coming soon)"><svg class="ic"><use href="#i-history"/></svg></button>
+    </nav>
+
+    <span class="tb-spacer"></span>
+    <div id="led-strip"><!-- 18 LEDs, animated by renderer.js --></div>
+  </header>
+
+  <div id="pages">
+
+    <!-- Setup -->
+    <div id="page-home" class="page active">
+      <div class="home-header">
+        <h1>Select game</h1>
+        <p>Choose your sim and set up the telemetry connection before entering the pits.</p>
+      </div>
+
+      <div class="game-grid">
+        <div class="game-node available selected" id="card-gt7" data-game="gt7" onclick="selectGame('gt7')">
+          <span class="node-ring"><img src="assets/games/gt7.svg" alt="" /></span>
+          <span class="node-label">Gran Turismo 7</span>
+          <span class="node-badge badge-active">Active</span>
+          <span class="node-desc">Full telemetry via UDP. PS5 network access required.</span>
+        </div>
+        <div class="game-node soon">
+          <span class="node-ring"><img src="assets/games/f1.svg" alt="" /></span>
+          <span class="node-label">F1 24 / F1 25</span>
+          <span class="node-badge badge-soon">Soon</span>
+          <span class="node-desc">UDP telemetry adaptation layer in development.</span>
+        </div>
+        <div class="game-node soon">
+          <span class="node-ring"><img src="assets/games/assetto-corsa.svg" alt="" /></span>
+          <span class="node-label">Assetto Corsa</span>
+          <span class="node-badge badge-soon">Soon</span>
+          <span class="node-desc">Shared memory / plugin bridge planned.</span>
+        </div>
+        <div class="game-node soon">
+          <span class="node-ring"><img src="assets/games/acc.svg" alt="" /></span>
+          <span class="node-label">ACC</span>
+          <span class="node-badge badge-soon">Soon</span>
+          <span class="node-desc">Assetto Corsa Competizione UDP support.</span>
+        </div>
+      </div>
+
+      <div class="panel setup-panel" id="setup-gt7">
+        <h2>GT7 connection</h2>
+        <div class="setup-row">
+          <div class="setup-field">
+            <label for="ps5-ip">PS5 IP address</label>
+            <input type="text" id="ps5-ip" placeholder="xxx.xxx.x.xx" />
+          </div>
+          <div class="setup-field">
+            <label for="ws-host">Backend host</label>
+            <input type="text" id="ws-host" value="127.0.0.1" />
+          </div>
+          <div class="setup-field">
+            <label for="ws-port">WS port</label>
+            <input type="text" id="ws-port" class="port-input" value="8765" />
+          </div>
+        </div>
+        <button class="btn-primary" onclick="connectBackend()">Connect</button>
+        <div class="status-row" id="status-row">
+          <div class="status-dot" id="status-dot"></div>
+          <div class="status-text" id="status-text">Not connected. Enter the PS5 IP and click Connect.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page">
+
+      <div class="dash-top">
+        <div class="dash-meta">
+          <div class="panel panel-blue"><div class="panel-label">Position</div><div class="panel-value" id="d-position">—</div></div>
+          <div class="panel panel-purple"><div class="panel-label">Lap</div><div class="panel-value" id="d-lap">—</div></div>
+          <div class="panel"><div class="panel-label">Paused</div><div class="panel-value" id="d-paused">—</div></div>
+        </div>
+
+        <div id="big-gear-panel">
+          <div id="gear-display">N</div>
+          <div id="speed-display">— KM/H</div>
+        </div>
+
+        <div class="panel panel-blue lap-times-panel">
+          <div class="panel-label">Lap time</div>
+          <div class="lap-time-row"><div class="lap-time-value" id="d-lap-current">--:--.---</div><div class="lap-time-sub">Current</div></div>
+          <div class="lap-time-row"><div class="lap-time-value lt-last" id="d-lap-last">--:--.---</div><div class="lap-time-sub">Last</div></div>
+          <div class="lap-time-row"><div class="lap-time-value lt-best" id="d-lap-best">--:--.---</div><div class="lap-time-sub">Best</div></div>
+        </div>
+      </div>
+
+      <div class="dash-mid">
+        <div class="panel">
+          <div class="panel-label">Tyres (°C)</div>
+          <div class="tyre-grid">
+            <div class="tyre-temp-label" id="t-fl">—</div><div class="tyre-viz"></div><div class="tyre-viz"></div><div class="tyre-temp-label" id="t-fr">—</div>
+            <div class="tyre-temp-label" id="t-rl">—</div><div class="tyre-viz"></div><div class="tyre-viz"></div><div class="tyre-temp-label" id="t-rr">—</div>
+          </div>
+        </div>
+
+        <div class="panel rpm-section">
+          <div class="rpm-bar-container" id="rpm-bar"></div>
+          <div class="rpm-value" id="d-rpm">0</div>
+          <div class="rpm-label">RPM</div>
+        </div>
+
+        <div class="side-stack">
+          <div class="panel"><div class="panel-label">Total laps</div><div class="panel-value" style="font-size:24px" id="d-total-laps">—</div></div>
+          <div class="panel"><div class="panel-label">Car ID</div><div class="panel-value" style="font-size:18px;color:var(--muted)" id="d-car-id">—</div></div>
+        </div>
+      </div>
+
+      <div class="dash-bottom">
+        <div class="inputs-row">
+          <div class="panel panel-red"><div class="panel-label">Brake</div><div class="panel-value-sm" id="d-brake">0</div></div>
+          <div class="panel panel-green"><div class="panel-label">Throttle</div><div class="panel-value-sm" id="d-throttle">0</div></div>
+        </div>
+
+        <div class="panel panel-yellow">
+          <div class="panel-label">Fuel</div>
+          <div class="fuel-row">
+            <div class="fuel-stat"><div class="fuel-stat-value" id="d-fuel-pct">—<span class="fuel-stat-unit">%</span></div><div class="fuel-stat-sub">Fuel left</div></div>
+            <div class="fuel-stat"><div class="fuel-stat-value" id="d-fuel-per-lap">—<span class="fuel-stat-unit">%</span></div><div class="fuel-stat-sub">Per lap</div></div>
+            <div class="fuel-stat"><div class="fuel-stat-value" id="d-laps-left">—</div><div class="fuel-stat-sub">Laps left</div></div>
+          </div>
+        </div>
+
+        <div class="panel"><div class="panel-label">Time</div><div class="time-value" id="d-time">--:-- --</div></div>
+      </div>
+
+      <div id="disconnected-overlay">
+        <span class="node-ring"><svg class="ic"><use href="#i-radio"/></svg></span>
+        <div class="overlay-text">Waiting for telemetry. Open Setup to connect.</div>
+      </div>
+    </div>
+
+    <!-- Pitwall -->
+    <div id="page-pitwall" class="page">
+      <div class="pitwall-grid">
+
+        <div class="panel pw-panel">
+          <div class="pw-panel-title">Race control</div>
+          <div class="pw-position"><div class="pw-position-value" id="pw-position">—</div><div class="pw-position-delta" id="pw-position-delta"></div></div>
+          <div class="pw-stat-row"><div class="pw-stat-label">Lap</div><div class="pw-stat-value" id="pw-lap">—</div></div>
+          <div class="pw-stat-row"><div class="pw-stat-label">Last lap</div><div class="pw-stat-value" id="pw-last-lap">--:--.---</div></div>
+          <div class="pw-note">GT7 telemetry only describes your own car, so gaps to cars ahead or behind aren't available.</div>
+        </div>
+
+        <div class="panel pw-panel">
+          <div class="pw-panel-title">Strategy</div>
+          <div class="pw-stat-row"><div class="pw-stat-label">Fuel</div><div class="pw-stat-value" id="pw-fuel">—%</div></div>
+          <div class="pw-stat-row"><div class="pw-stat-label">Avg / lap</div><div class="pw-stat-value" id="pw-avg-fuel">—</div></div>
+          <div class="pw-stat-row"><div class="pw-stat-label">Laps to empty</div><div class="pw-stat-value" id="pw-laps-to-empty">—</div></div>
+          <div class="pw-stat-row"><div class="pw-stat-label">Pit window</div><div class="pw-stat-value" id="pw-pit-window">—</div></div>
+        </div>
+
+        <div class="panel pw-panel">
+          <div class="pw-panel-title">Tyres</div>
+          <div class="pw-tyre-grid">
+            <div class="pw-tyre-cell"><div class="pw-tyre-cell-label">FL</div><div class="pw-tyre-cell-temp" id="pw-t-fl">—°</div><div class="pw-tyre-cell-slip" id="pw-s-fl">slip —</div></div>
+            <div class="pw-tyre-cell"><div class="pw-tyre-cell-label">FR</div><div class="pw-tyre-cell-temp" id="pw-t-fr">—°</div><div class="pw-tyre-cell-slip" id="pw-s-fr">slip —</div></div>
+            <div class="pw-tyre-cell"><div class="pw-tyre-cell-label">RL</div><div class="pw-tyre-cell-temp" id="pw-t-rl">—°</div><div class="pw-tyre-cell-slip" id="pw-s-rl">slip —</div></div>
+            <div class="pw-tyre-cell"><div class="pw-tyre-cell-label">RR</div><div class="pw-tyre-cell-temp" id="pw-t-rr">—°</div><div class="pw-tyre-cell-slip" id="pw-s-rr">slip —</div></div>
+          </div>
+        </div>
+
+        <div class="panel pw-panel" style="grid-column:1/-1">
+          <div class="pw-panel-title">Telemetry</div>
+          <div class="pw-telem-row"><div class="pw-telem-label"><span>Speed</span><span id="pw-v-speed">0 km/h</span></div><div class="pw-telem-track"><div class="pw-telem-fill fill-speed" id="pw-b-speed"></div></div></div>
+          <div class="pw-telem-row"><div class="pw-telem-label"><span>RPM</span><span id="pw-v-rpm">0</span></div><div class="pw-telem-track"><div class="pw-telem-fill fill-rpm" id="pw-b-rpm"></div></div></div>
+          <div class="pw-telem-row"><div class="pw-telem-label"><span>Throttle</span><span id="pw-v-throttle">0%</span></div><div class="pw-telem-track"><div class="pw-telem-fill fill-throttle" id="pw-b-throttle"></div></div></div>
+          <div class="pw-telem-row"><div class="pw-telem-label"><span>Brake</span><span id="pw-v-brake">0%</span></div><div class="pw-telem-track"><div class="pw-telem-fill fill-brake" id="pw-b-brake"></div></div></div>
+        </div>
+
+        <div class="panel pw-panel" id="pw-live-events">
+          <div class="pw-panel-title">Live events</div>
+          <div class="pw-events-list" id="pw-events-list"><div class="pw-events-empty">No events yet.</div></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="renderer.js"></script>
+</body>
+</html>
