@@ -6,8 +6,6 @@
 
 **Motorsport telemetry, strategy and race engineering — built for sim racing.**
 
-**Motorsport telemetry, strategy and race engineering — built for sim racing.**
-
 StintLab is an **open-source motorsport telemetry and race strategy application** designed to bring a lightweight race-engineering workflow to sim racing.
 
 The project is currently in **active development**. At the moment, StintLab supports **Gran Turismo 7 (GT7)** telemetry, with support for additional racing platforms planned for the future.
