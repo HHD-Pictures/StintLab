@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="180" alt="StintLab" src="https://github.com/user-attachments/assets/b2d650be-a494-4ac2-808c-1b90fbbbde19" />
+  <img width="1256" height="257" alt="stintlab-full" src="https://github.com/user-attachments/assets/88887067-880f-4579-9fb9-fbd368574820" />
 </p>
 
 # StintLab
