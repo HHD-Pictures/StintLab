@@ -1,4 +1,10 @@
-<img width="257" height="257" alt="stintlab-mark" src="https://github.com/user-attachments/assets/b2d650be-a494-4ac2-808c-1b90fbbbde19" /> # StintLab
+<p align="center">
+  <img width="180" alt="StintLab" src="https://github.com/user-attachments/assets/b2d650be-a494-4ac2-808c-1b90fbbbde19" />
+</p>
+
+# StintLab
+
+**Motorsport telemetry, strategy and race engineering — built for sim racing.**
 
 **Motorsport telemetry, strategy and race engineering — built for sim racing.**
 
